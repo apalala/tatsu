@@ -1,2 +1,1 @@
-# -*- coding: utf-8 -*-
-from tatsu._config import __version__  # noqa
+__version__ = '5.5.1'
