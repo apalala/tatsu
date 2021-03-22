@@ -622,9 +622,7 @@ def test_lookahead_leftrec():
         model = compile(grammar)
         for rule in model.rules:
             assert ref(rule.name) == ref(rule.name)
-            if rule.is_leftrec:
-                assert ref(rule.name) in rule.firstset()
-            assert rule.is_leftrec == rule.is_left_recursive, f'{ref(rule.name)} {rule.firstset()!r}'
+            assert rule.is_leftrec == rule.is_leader, f'{ref(rule.name)} {rule.firstset()!r}'
 
     test(grammar_a)
     test(grammar_b)

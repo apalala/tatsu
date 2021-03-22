@@ -164,7 +164,7 @@ def find_left_recursion(grammar):
                     # turn off memoization for all rules that were involved in this cycle
                     for rule in stack_positions:
                         if isinstance(rule, tatsu.grammars.Rule):
-                            rule.is_memoizable = False
+                            rule._is_memoizable = False
 
                     child._is_leftrec = True
 

@@ -38,6 +38,14 @@ def ref(name):
     return (_ref(name),)
 
 
+def is_ref(f):
+    if not isinstance(f, tuple):
+        return False
+    if len(f) !=1:
+        return False
+    return isinstance(f[0], _ref)
+
+
 def kdot(x, y, k):
     if not y:
         return oset(a[:k] for a in x)
@@ -839,12 +847,22 @@ class Rule(Decorator):
         self.is_name = 'name' in self.decorators
         self.base = None
         self._is_leftrec = False  # Starts a left recursive cycle
-        self.is_memoizable = 'nomemo' not in self.decorators
+        self._is_leader = False
+        self._is_memoizable = 'nomemo' not in self.decorators
 
     @property
     def is_leftrec(self):
-        return self._is_leftrec
+        return self.is_leader
+        # return self._is_leftrec
         # return self.is_left_recursive
+
+    @property
+    def is_memoizable(self):
+        return self._is_memoizable
+
+    @property
+    def is_leader(self):
+        return self._is_leader
 
     @functools.cached_property
     def is_left_recursive(self):
@@ -1074,6 +1092,7 @@ class Grammar(Model):
     def _calc_lookahead_sets(self, k=1):
         self._calc_first_sets()
         self._calc_follow_sets()
+        self._calc_recursion()
 
     def _calc_first_sets(self, k=1):
         f = defaultdict(oset)
@@ -1097,6 +1116,30 @@ class Grammar(Model):
 
         for rule in self.rules:
             rule._follow_set = fl[rule.name]
+
+    def _calc_recursion(self):
+        def leftrec_cycle(f, cycle=None):
+            cycle = oset() if cycle is None else cycle
+            if f in cycle:
+                return
+            cycle |= {f}
+            rule = self.rulemap[f[0]]
+            for x in rule.lookahead():
+                if not is_ref(x) or x in cycle:
+                    continue
+                r = self.rulemap[x[0]]
+                if r.is_left_recursive:
+                    cycle |= leftrec_cycle(x, cycle)
+            return cycle
+
+        for rule in self.rules:
+            if not rule.is_left_recursive:
+                continue
+            cycle = leftrec_cycle(ref(rule.name))
+            for r in cycle:
+                self.rulemap[r[0]]._is_memoizable = False
+            if ref(rule.name) == min(cycle):
+                rule._is_leader = True
 
     def parse(self,
               text,
