@@ -148,7 +148,7 @@ def find_left_recursion(grammar):
             return
 
         # beforeNode
-        leftrec = isinstance(model, tatsu.grammars.Rule) and model.is_leftrec
+        leftrec = isinstance(model, tatsu.grammars.Rule) and model._is_leftrec
         if leftrec:
             lr_stack_positions.append(stack_depth[0])
 
@@ -166,7 +166,7 @@ def find_left_recursion(grammar):
                         if isinstance(rule, tatsu.grammars.Rule):
                             rule.is_memoizable = False
 
-                    child.is_leftrec = True
+                    child._is_leftrec = True
 
         # afterNode
         if leftrec:
@@ -183,7 +183,7 @@ def find_left_recursion(grammar):
     # print()
     # for rule in grammar.children_list():
     #    print(rule)
-    #    if rule.is_leftrec: print("-> Leftrec")
+    #    if rule._is_leftrec: print("-> Leftrec")
     #    if rule.is_nullable(): print("-> Nullable")
 
     return
