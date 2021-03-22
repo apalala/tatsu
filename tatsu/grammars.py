@@ -797,7 +797,7 @@ class RuleRef(Model):
         return {self.name}
 
     def _first(self, k, f):
-        self._firstset = oset(f[self.name]) | {ref(self.name)}
+        self._firstset = oset({ref(self.name)}) | oset(f[self.name])
         return self._firstset
 
     def _follow(self, k, fl, a):
@@ -838,12 +838,18 @@ class Rule(Decorator):
 
         self.is_name = 'name' in self.decorators
         self.base = None
-        self.is_leftrec = False  # Starts a left recursive cycle
+        self._is_leftrec = False  # Starts a left recursive cycle
         self.is_memoizable = 'nomemo' not in self.decorators
 
     @property
+    def is_leftrec(self):
+        return self._is_leftrec
+        # return self.is_left_recursive
+
+    @functools.cached_property
     def is_left_recursive(self):
-        return self.name in self.lookahead()
+        # return ref(self.name) in self.firstset()
+        return ref(self.name) == self.firstset()[0]
 
     def parse(self, ctx):
         result = self._parse_rhs(ctx, self.exp)
