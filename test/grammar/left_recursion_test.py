@@ -3,6 +3,8 @@ from __future__ import generator_stop
 
 import pytest
 
+from tatsu.grammars import ref
+
 from tatsu.exceptions import FailedParse
 from tatsu.tool import compile, parse
 
@@ -313,7 +315,7 @@ def test_interlocking_cycles(trace=False):
     '''
 
     model = compile(grammar)
-    model.parse("nlm-n+(aaa)n", trace=True, colorize=True)
+    model.parse("nlm-n+(aaa)n", trace=False, colorize=True)
 
 @pytest.mark.skip("Similar to the one above")
 def test_mutual_left_recursion(trace=False):
@@ -552,3 +554,79 @@ def test_leftrec_with_void():
 
     assert (('a', 'a'), 'a') == parse(left_grammar, 'aaa')
     assert parse(left_grammar, '') is None
+
+
+# @pytest.mark.skip("nullable leftrec differs from lookahead leftrec")
+def test_lookahead_leftrec():
+    grammar_a = '''
+        @@left_recursion :: True
+        s = e $ ;
+        e = [e '+'] t ;
+        t = [t '*'] a ;
+        a = ?/[0-9]/? ;
+    '''
+    grammar_b = '''
+        @@left_recursion :: True
+        s = e $ ;
+        e = [e '+'] a ;
+        a = n | p ;
+        n = ?/[0-9]/? ;
+        p = '(' @:e ')' ;
+    '''
+
+    grammar_e = '''
+        @@left_recursion :: True
+        start
+            =
+            expre $
+            ;
+
+        expre
+            =
+            | expre '+' factor
+            | expre '-' factor
+            | expre '*' factor
+            | expre '/' factor
+            | factor
+            ;
+
+        factor
+            =
+            | '(' @:expre ')'
+            | number
+            ;
+
+        number
+            =
+            ?/[0-9]+/?
+            ;
+    '''
+
+    grammar_i = r'''
+        @@grammar::CALC
+        @@left_recursion :: True
+
+        start = expression $;
+        number = /\d+/;
+
+        addition = expression '+' number;
+        subtraction = expression '-' number;
+
+        expression =
+            | addition
+            | subtraction
+            | number;
+    '''
+
+    def test(grammar):
+        model = compile(grammar)
+        for rule in model.rules:
+            assert ref(rule.name) == ref(rule.name)
+            if rule.is_leftrec:
+                assert ref(rule.name) in rule.firstset()
+            assert rule.is_leftrec == rule.is_left_recursive, f'{ref(rule.name)} {rule.firstset()!r}'
+
+    test(grammar_a)
+    test(grammar_b)
+    test(grammar_e)
+    test(grammar_i)
