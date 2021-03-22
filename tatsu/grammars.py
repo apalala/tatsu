@@ -841,6 +841,10 @@ class Rule(Decorator):
         self.is_leftrec = False  # Starts a left recursive cycle
         self.is_memoizable = 'nomemo' not in self.decorators
 
+    @property
+    def is_left_recursive(self):
+        return self.name in self.lookahead()
+
     def parse(self, ctx):
         result = self._parse_rhs(ctx, self.exp)
         self._add_defined_attributes(result)
