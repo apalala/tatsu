@@ -26,12 +26,7 @@ class OrderedSet(MutableSet[T]):
         return len(self._map)
 
     def __getitem__(self, i):
-        items = iter(self._map.keys())
-
-        n = 0
-        while item := next(items) and n < i:
-            pass
-        return item
+        return list(self._map.keys())[i]
 
     def copy(self) -> "OrderedSet[T]":
         return self.__class__(self)
