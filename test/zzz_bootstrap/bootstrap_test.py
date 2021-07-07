@@ -125,7 +125,7 @@ class BootstrapTests(unittest.TestCase):
         print('-' * 20, 'phase 10 - Parse with a model using a semantics')
         g10 = g9.parse(
             text,
-            start_rule='start',
+            start='start',
             semantics=EBNFGrammarSemantics('EBNFBootstrap')
         )
         generated_grammar10 = str(g10)
@@ -140,13 +140,13 @@ class BootstrapTests(unittest.TestCase):
             pickle.dump(g10, f, protocol=2)
         with open('./tmp/11.tatsu', 'rb') as f:
             g11 = pickle.load(f)
-        r11 = g11.parse(
-            text,
-            start_rule='start',
-            semantics=EBNFGrammarSemantics('EBNFBootstrap')
-        )
         with open('./tmp/11.ebnf', 'w') as f:
             f.write(str(g11))
+        r11 = g11.parse(
+            text,
+            start='start',
+            semantics=EBNFGrammarSemantics('EBNFBootstrap')
+        )
         gencode11 = codegen(r11)
         with open('./tmp/bootstrap_g11.py', 'w') as f:
             f.write(gencode11)

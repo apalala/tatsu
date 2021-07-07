@@ -1,7 +1,32 @@
+from __future__ import annotations
+import importlib
 import argparse
+from pathlib import Path
 
+from ..tool import gencode
 from .import filelist_from_patterns
 from .parproc import processing_loop
+
+
+def generate_and_load_parser(name, grammar):
+    init_filename = Path('./tmp/__init__')
+    init_filename.touch(exist_ok=True)
+
+    parser = gencode(name='Test', grammar=grammar)
+    parser_filename = Path(f'./tmp/{name}.py')
+    with open(parser_filename, 'wt') as f:
+        f.write(parser)
+    try:
+        importlib.invalidate_caches()
+        module = importlib.import_module(f'tmp.{name}', 'tmp')
+        importlib.reload(module)
+        try:
+            return module.UnknownParser()  # noqa
+        except (AttributeError, ImportError):
+            return module.TestParser()  # noqa
+    finally:
+        pass
+        # parser_filename.unlink()
 
 
 def parallel_test_run(parse, options):

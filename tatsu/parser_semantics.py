@@ -70,9 +70,10 @@ class EBNFGrammarSemantics(ModelBuilderSemantics):
         return grammars.Sequence(ast)
 
     def choice(self, ast, *args):
-        if len(ast) == 1:
-            return ast[0]
         return grammars.Choice(ast)
+
+    def option(self, ast, *args):
+        return grammars.Option(ast)
 
     def new_name(self, name):
         if name in self.rules:

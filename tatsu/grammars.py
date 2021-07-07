@@ -130,6 +130,15 @@ class Model(Node):
     def defines(self):
         return []
 
+    def _add_defined_attributes(self, ctx, ast=None):
+        defines = dict(compress_seq(self.defines()))
+
+        keys = [k for k, list in defines.items() if not list]
+        list_keys = [k for k, list in defines.items() if list]
+        ctx._define(keys, list_keys)
+        if isinstance(ast, (AST, Node)):
+            ast._define(keys, list_keys)
+
     def lookahead(self, k=1):
         if self._lookahead is None:
             self._lookahead = kdot(self.firstset(k), self.followset(k), k)
@@ -541,6 +550,13 @@ class Choice(Model):
         return self.options
 
 
+class Option(Decorator):
+    def parse(self, ctx):
+        result = super().parse(ctx)
+        self._add_defined_attributes(ctx, result)
+        return result
+
+
 class Closure(Decorator):
     def parse(self, ctx):
         return ctx._closure(lambda: self.exp.parse(ctx))
@@ -841,7 +857,11 @@ class Rule(Decorator):
 
     def parse(self, ctx):
         result = self._parse_rhs(ctx, self.exp)
-        self._add_defined_attributes(result)
+        ctx.last_node = result
+        if not isinstance(self.exp, Choice) or not ctx.ast:
+            # note: a patch, but it avoids more complicated solutions
+            print(f'define {self.defines()=}')
+            self._add_defined_attributes(ctx, result)
         return result
 
     def _parse_rhs(self, ctx, exp):
@@ -856,16 +876,11 @@ class Rule(Decorator):
         result = ctx._call(ruleinfo)
         return result
 
-    def _add_defined_attributes(self, ast):
-        defines = compress_seq(self.defines())
-        if not isinstance(ast, (AST, Node)):
-            return
-        for d, l in defines:
-            if not hasattr(ast, d):
-                setattr(ast, d, [] if l else None)
-
-    # def firstset(self, k=1):
-    #     return self.exp.firstset(k=k)
+    def defines(self):
+        if isinstance(self.exp, Choice):
+            return []  # defines done in Choice.options
+        else:
+            return super().defines()
 
     def _first(self, k, f):
         self._firstset = self.exp._first(k, f) | f[self.name]

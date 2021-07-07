@@ -40,6 +40,14 @@ class Node(object):
             except AttributeError:
                 raise AttributeError("'%s' is a reserved name" % name)
 
+    def _define(self, keys, list_keys):
+        for key in keys:
+            if not hasattr(self, key):
+                setattr(self, key, None)
+        for key in list_keys:
+            if not hasattr(self, key):
+                setattr(self, key, [])
+
     @property
     def ast(self):
         return self._ast

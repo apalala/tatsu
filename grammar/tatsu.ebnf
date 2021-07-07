@@ -139,8 +139,15 @@ expre
 
 choice::Choice
     =
-    ['|' ~] @+:sequence {'|' ~ @+:sequence}+
+    ['|' ~] @+:option {'|' ~ @+:option}+
     ;
+
+
+option::Option
+    =
+    @:sequence
+    ;
+
 
 
 sequence::Sequence
