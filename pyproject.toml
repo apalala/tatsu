@@ -1,0 +1,6 @@
+[build-system]
+requires = ["setuptools>=44", "wheel", "read_version[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.read_version]
+version = "tatsu._config:__version__"
